@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bookmark Assistant</title>
+  <style>
+    body {
+      width: 380px;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #f8fafc;
+      color: #1f2937;
+    }
+
+    .header {
+      padding: 12px 16px;
+      background: #3b82f6;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .main {
+      padding: 12px;
+    }
+
+    .config-section {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .config-section h2 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 8px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 2px;
+    }
+
+    input[type="text"],
+    input[type="url"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    input[type="password"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .radio-option input[type="radio"] {
+      margin: 0;
+    }
+
+    .radio-option label {
+      margin: 0;
+      font-weight: normal;
+    }
+
+    .radio-option input[disabled] + label {
+      color: #9ca3af;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      margin: 0;
+    }
+
+    .page-info {
+      background: #f3f4f6;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .page-info .url {
+      font-size: 12px;
+      color: #6b7280;
+      word-break: break-all;
+      margin-top: 4px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #2563eb;
+    }
+
+    .btn-primary:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn-clean {
+      margin-top: 0px;
+      margin-bottom: 16px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 400;
+      gap: 4px;
+      display: inline-flex;
+      width: auto;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status.testing {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .duplicate-warning {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .duplicate-warning .warning-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #92400e;
+    }
+
+    .duplicate-warning .warning-info {
+      font-size: 12px;
+      color: #78350f;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+
+    .duplicate-warning .warning-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .duplicate-warning .warning-actions .btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      width: auto;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #6b7280;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+    </svg>
+    <h1>Bookmark Assistant</h1>
+  </div>
+
+  <div class="main">
+    <!-- 配置部分 -->
+    <div id="configSection" class="config-section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="M512.5 390.6c-29.9 0-57.9 11.6-79.1 32.8c-21.1 21.2-32.8 49.2-32.8 79.1s11.7 57.9 32.8 79.1c21.2 21.1 49.2 32.8 79.1 32.8s57.9-11.7 79.1-32.8c21.1-21.2 32.8-49.2 32.8-79.1s-11.7-57.9-32.8-79.1a110.96 110.96 0 0 0-79.1-32.8m412.3 235.5l-65.4-55.9c3.1-19 4.7-38.4 4.7-57.7s-1.6-38.8-4.7-57.7l65.4-55.9a32.03 32.03 0 0 0 9.3-35.2l-.9-2.6a442.5 442.5 0 0 0-79.6-137.7l-1.8-2.1a32.12 32.12 0 0 0-35.1-9.5l-81.2 28.9c-30-24.6-63.4-44-99.6-57.5l-15.7-84.9a32.05 32.05 0 0 0-25.8-25.7l-2.7-.5c-52-9.4-106.8-9.4-158.8 0l-2.7.5a32.05 32.05 0 0 0-25.8 25.7l-15.8 85.3a353.4 353.4 0 0 0-98.9 57.3l-81.8-29.1a32 32 0 0 0-35.1 9.5l-1.8 2.1a445.9 445.9 0 0 0-79.6 137.7l-.9 2.6c-4.5 12.5-.8 26.5 9.3 35.2l66.2 56.5c-3.1 18.8-4.6 38-4.6 57c0 19.2 1.5 38.4 4.6 57l-66 56.5a32.03 32.03 0 0 0-9.3 35.2l.9 2.6c18.1 50.3 44.8 96.8 79.6 137.7l1.8 2.1a32.12 32.12 0 0 0 35.1 9.5l81.8-29.1c29.8 24.5 63 43.9 98.9 57.3l15.8 85.3a32.05 32.05 0 0 0 25.8 25.7l2.7.5a448.3 448.3 0 0 0 158.8 0l2.7-.5a32.05 32.05 0 0 0 25.8-25.7l15.7-84.9c36.2-13.6 69.6-32.9 99.6-57.5l81.2 28.9a32 32 0 0 0 35.1-9.5l1.8-2.1c34.8-41.1 61.5-87.4 79.6-137.7l.9-2.6c4.3-12.4.6-26.3-9.5-35m-412.3 52.2c-97.1 0-175.8-78.7-175.8-175.8s78.7-175.8 175.8-175.8s175.8 78.7 175.8 175.8s-78.7 175.8-175.8 175.8"/></svg>
+        设置
+      </h2>
+
+      <div class="form-group">
+        <label for="apiUrl">导航域名</label>
+        <input type="text" id="apiUrl" placeholder="例如: nav.example.com">
+        <div class="help-text">输入您的 cloudnav 部署地址，不需要 http(s)://</div>
+      </div>
+
+      <div class="form-group">
+        <label>部署平台</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" id="edgeone" name="platform" value="edgeone" checked>
+            <label for="edgeone">EdgeOne</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="cloudflare" name="platform" value="cloudflare">
+            <label for="cloudflare">Cloudflare</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="vercel" name="platform" value="vercel" disabled>
+            <label for="vercel">Vercel (即将支持)</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="aliyun" name="platform" value="aliyun" disabled>
+            <label for="aliyun">Aliyun ESA (即将支持)</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">访问密码</label>
+        <input type="password" id="password" placeholder="输入访问密码">
+        <div class="help-text">部署时设置的 PASSWORD 环境变量</div>
+      </div>
+
+      <div class="actions" style="margin-top: 12px;">
+        <button id="testBtn" class="btn btn-secondary" style="width: auto;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="M512 0C229.232 0 0 229.232 0 512c0 282.784 229.232 512 512 512c282.784 0 512-229.216 512-512C1024 229.232 794.784 0 512 0m0 961.008c-247.024 0-448-201.984-448-449.01c0-247.024 200.976-448 448-448s448 200.977 448 448s-200.976 449.01-448 449.01m204.336-636.352L415.935 626.944l-135.28-135.28c-12.496-12.496-32.752-12.496-45.264 0c-12.496 12.496-12.496 32.752 0 45.248l158.384 158.4c12.496 12.48 32.752 12.48 45.264 0c1.44-1.44 2.673-3.009 3.793-4.64l318.784-320.753c12.48-12.496 12.48-32.752 0-45.263c-12.512-12.496-32.768-12.496-45.28 0"/></svg>
+          测试连接
+        </button>
+        <button id="saveConfigBtn" class="btn btn-primary" style="width: auto;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16"><path fill="currentColor" d="M10.414 1H1v14h14V5.586zM4 4h5v2H4zm8 5v4h-2v-2H6v2H4V9z"/></svg>
+          保存配置
+        </button>
+      </div>
+    </div>
+
+    <!-- 保存部分 -->
+    <div id="saveSection" class="config-section" style="display: none;">
+      <h2>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"/>
+          <polyline points="9,11 12,14 22,4"/>
+        </svg>
+        添加书签
+      </h2>
+
+      <!-- 链接类型选择 -->
+      <div class="form-group">
+        <label>保存类型</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" id="currentTab" name="linkType" value="current" checked>
+            <label for="currentTab">当前页面</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="custom" name="linkType" value="custom">
+            <label for="custom">自定义</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 当前页面信息 -->
+      <div id="currentPageSection">
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label for="pageTitleInput" style="font-size: 12px; color: #6b7280;">标题</label>
+          <input type="text" id="pageTitleInput" placeholder="获取中...">
+        </div>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label for="pageUrlInput" style="font-size: 12px; color: #6b7280;">URL</label>
+          <input type="url" id="pageUrlInput" placeholder="获取中...">
+        </div>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label for="pageDescriptionInput" style="font-size: 12px; color: #6b7280;">说明</label>
+          <textarea id="pageDescriptionInput" rows="1" placeholder="正在获取页面描述..." style="resize: vertical; width: 100%;"></textarea>
+        </div>
+        <button id="cleanUrlBtn" class="btn btn-secondary btn-clean" type="button" title="去除 URL 中的追踪参数">
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h12M6 12h12M4 18h12"/></svg>
+          净化链接
+        </button>
+      </div>
+
+      <!-- 自定义链接信息 -->
+      <div id="customLinkSection" style="display: none;">
+        <div class="form-group">
+          <label for="customTitle">标题 <span style="color: #ef4444;">*</span></label>
+          <input type="text" id="customTitle" placeholder="输入链接标题">
+        </div>
+
+        <div class="form-group">
+          <label for="customUrl">URL <span style="color: #ef4444;">*</span></label>
+          <input type="url" id="customUrl" placeholder="https://example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="customDescription">说明</label>
+          <textarea id="customDescription" rows="2" placeholder="输入链接说明（可选）" style="resize: vertical; width: 100%;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="customIcon">图标</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <select id="iconType" style="flex: 1;">
+              <option value="faviconextractor">Favicon Extractor</option>
+              <option value="google">Google API</option>
+              <option value="customapi">自定义 API</option>
+              <option value="customurl">自定义 URL</option>
+            </select>
+            <button id="previewIconBtn" class="btn btn-secondary" style="width: auto; padding: 8px 12px; font-size: 12px;">
+              预览
+            </button>
+          </div>
+          <input type="text" id="customIcon" placeholder="自定义图标 URL（可选）" style="display: none;">
+          <div id="iconPreview" style="margin-top: 8px; height: 32px; display: flex; align-items: center; gap: 8px;">
+            <span style="color: #9ca3af; font-size: 12px;">图标预览</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 分类选择 -->
+      <div class="form-group">
+        <label for="categorySelect">选择分类 <span style="color: #ef4444;">*</span></label>
+        <select id="categorySelect">
+          <option value="">加载分类中...</option>
+        </select>
+        <div class="loading" id="categoryLoading" style="display: none;">
+          <div class="spinner"></div>
+          <span>加载中...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="actions">
+      <button id="saveBtn" class="btn btn-primary" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16"><path fill="currentColor" d="M10.414 1H1v14h14V5.586zM4 4h5v2H4zm8 5v4h-2v-2H6v2H4V9z"/></svg>
+        保存
+      </button>
+      <button id="settingsBtn" class="btn btn-secondary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="M512.5 390.6c-29.9 0-57.9 11.6-79.1 32.8c-21.1 21.2-32.8 49.2-32.8 79.1s11.7 57.9 32.8 79.1c21.2 21.1 49.2 32.8 79.1 32.8s57.9-11.7 79.1-32.8c21.1-21.2 32.8-49.2 32.8-79.1s-11.7-57.9-32.8-79.1a110.96 110.96 0 0 0-79.1-32.8m412.3 235.5l-65.4-55.9c3.1-19 4.7-38.4 4.7-57.7s-1.6-38.8-4.7-57.7l65.4-55.9a32.03 32.03 0 0 0 9.3-35.2l-.9-2.6a442.5 442.5 0 0 0-79.6-137.7l-1.8-2.1a32.12 32.12 0 0 0-35.1-9.5l-81.2 28.9c-30-24.6-63.4-44-99.6-57.5l-15.7-84.9a32.05 32.05 0 0 0-25.8-25.7l-2.7-.5c-52-9.4-106.8-9.4-158.8 0l-2.7.5a32.05 32.05 0 0 0-25.8 25.7l-15.8 85.3a353.4 353.4 0 0 0-98.9 57.3l-81.8-29.1a32 32 0 0 0-35.1 9.5l-1.8 2.1a445.9 445.9 0 0 0-79.6 137.7l-.9 2.6c-4.5 12.5-.8 26.5 9.3 35.2l66.2 56.5c-3.1 18.8-4.6 38-4.6 57c0 19.2 1.5 38.4 4.6 57l-66 56.5a32.03 32.03 0 0 0-9.3 35.2l.9 2.6c18.1 50.3 44.8 96.8 79.6 137.7l1.8 2.1a32.12 32.12 0 0 0 35.1 9.5l81.8-29.1c29.8 24.5 63 43.9 98.9 57.3l15.8 85.3a32.05 32.05 0 0 0 25.8 25.7l2.7.5a448.3 448.3 0 0 0 158.8 0l2.7-.5a32.05 32.05 0 0 0 25.8-25.7l15.7-84.9c36.2-13.6 69.6-32.9 99.6-57.5l81.2 28.9a32 32 0 0 0 35.1-9.5l1.8-2.1c34.8-41.1 61.5-87.4 79.6-137.7l.9-2.6c4.3-12.4.6-26.3-9.5-35m-412.3 52.2c-97.1 0-175.8-78.7-175.8-175.8s78.7-175.8 175.8-175.8s175.8 78.7 175.8 175.8s-78.7 175.8-175.8 175.8"/></svg>
+        设置
+      </button>
+    </div>
+
+    <!-- 重复书签警告 -->
+    <div id="duplicateWarning" class="duplicate-warning" style="display: none;">
+      <div class="warning-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896zm0 832a384 384 0 1 0 0-768 384 384 0 0 0 0 768zm48-176a48 48 0 1 1-96 0 48 48 0 0 1 96 0zm-48-464a32 32 0 0 1 32 32v288a32 32 0 1 1-64 0V288a32 32 0 0 1 32-32z"/></svg>
+        <span>该根域名已存在</span>
+      </div>
+      <div id="duplicateInfo" class="warning-info"></div>
+      <div class="warning-actions">
+        <button id="cancelDuplicateBtn" class="btn btn-secondary">取消</button>
+        <button id="forceSaveBtn" class="btn btn-primary">仍然添加</button>
+      </div>
+    </div>
+
+    <!-- 状态提示 -->
+    <div id="status"></div>
+  </div>
+
+  <script src="vendor/tldts.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
