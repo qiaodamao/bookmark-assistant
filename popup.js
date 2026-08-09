@@ -769,6 +769,14 @@ class BookmarkExtension {
         }
 
         this.showStatus(`✅ 已保存到：${categoryName}`, 'success');
+
+        // 通知 background 刷新已保存域名缓存，以便更新图标红点状态
+        try {
+          chrome.runtime.sendMessage({ action: 'refreshDomainsCache' });
+        } catch (e) {
+          // 忽略消息发送失败
+        }
+
         setTimeout(() => {
           window.close();
         }, 1500);
