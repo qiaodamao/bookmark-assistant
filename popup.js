@@ -21,6 +21,9 @@ class BookmarkExtension {
       iconType: 'faviconextractor'
     };
     this.pendingLinkData = null; // 重复检测时暂存的待保存数据
+    this.existingBookmark = null; // 当前页精确匹配到的已存在书签
+    this.deleteConfirming = false; // 删除按钮是否处于二次确认态
+    this.deleteResetTimer = null; // 删除确认态的重置定时器
 
     this.init();
   }
@@ -32,6 +35,9 @@ class BookmarkExtension {
     // 加载保存的配置
     await this.loadConfig();
 
+    // 打开 popup 时通知后台刷新缓存，感知主站的删除等变更
+    chrome.runtime.sendMessage({ action: 'refreshDomainsCache' });
+
     // 绑定事件
     this.bindEvents();
 
@@ -42,6 +48,8 @@ class BookmarkExtension {
     if (this.isConfigured()) {
       this.toggleSection('save');
       await this.loadCategories();
+      // 检查当前页是否已添加（精确 URL 匹配），若是则显示卡片
+      this.checkExistingBookmark();
     } else {
       // 没有配置时显示设置页面
       this.toggleSection('config');
@@ -328,12 +336,27 @@ class BookmarkExtension {
         this.showStatus('已取消保存', '');
       });
     }
+
+    // 删除已存在书签（两步确认：首次点击进入确认态，再次点击执行删除）
+    const deleteBookmarkBtn = document.getElementById('deleteBookmarkBtn');
+    if (deleteBookmarkBtn) {
+      deleteBookmarkBtn.addEventListener('click', () => {
+        this.handleDeleteClick();
+      });
+    }
+
+    // 头部设置按钮：点击进入设置页面
+    const headerSettingsBtn = document.getElementById('headerSettingsBtn');
+    if (headerSettingsBtn) {
+      headerSettingsBtn.addEventListener('click', () => {
+        this.toggleSection('config');
+      });
+    }
   }
 
   toggleSection(section) {
     const configSection = document.getElementById('configSection');
     const saveSection = document.getElementById('saveSection');
-    const settingsBtn = document.getElementById('settingsBtn');
     const saveBtn = document.getElementById('saveBtn');
 
     if (section === 'config') {
@@ -341,9 +364,11 @@ class BookmarkExtension {
       configSection.style.display = 'block';
       saveSection.style.display = 'none';
 
-      // 在设置页面隐藏所有底部按钮，只使用页面内的按钮
+      // 在设置页面隐藏保存按钮
       saveBtn.style.display = 'none';
-      settingsBtn.style.display = 'none';
+
+      // 隐藏已添加书签卡片
+      this.hideExistingBookmark();
 
       // 清除状态信息
       document.getElementById('status').textContent = '';
@@ -352,24 +377,13 @@ class BookmarkExtension {
       configSection.style.display = 'none';
       saveSection.style.display = 'block';
 
-      // 设置按钮用于返回设置页面
-      settingsBtn.className = 'btn btn-secondary';
-      settingsBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024"><path fill="currentColor" d="M512.5 390.6c-29.9 0-57.9 11.6-79.1 32.8c-21.1 21.2-32.8 49.2-32.8 79.1s11.7 57.9 32.8 79.1c21.2 21.1 49.2 32.8 79.1 32.8s57.9-11.7 79.1-32.8c21.1-21.2 32.8-49.2 32.8-79.1s-11.7-57.9-32.8-79.1a110.96 110.96 0 0 0-79.1-32.8m412.3 235.5l-65.4-55.9c3.1-19 4.7-38.4 4.7-57.7s-1.6-38.8-4.7-57.7l65.4-55.9a32.03 32.03 0 0 0 9.3-35.2l-.9-2.6a442.5 442.5 0 0 0-79.6-137.7l-1.8-2.1a32.12 32.12 0 0 0-35.1-9.5l-81.2 28.9c-30-24.6-63.4-44-99.6-57.5l-15.7-84.9a32.05 32.05 0 0 0-25.8-25.7l-2.7-.5c-52-9.4-106.8-9.4-158.8 0l-2.7.5a32.05 32.05 0 0 0-25.8 25.7l-15.8 85.3a353.4 353.4 0 0 0-98.9 57.3l-81.8-29.1a32 32 0 0 0-35.1 9.5l-1.8 2.1a445.9 445.9 0 0 0-79.6 137.7l-.9 2.6c-4.5 12.5-.8 26.5 9.3 35.2l66.2 56.5c-3.1 18.8-4.6 38-4.6 57c0 19.2 1.5 38.4 4.6 57l-66 56.5a32.03 32.03 0 0 0-9.3 35.2l.9 2.6c18.1 50.3 44.8 96.8 79.6 137.7l1.8 2.1a32.12 32.12 0 0 0 35.1 9.5l81.8-29.1c29.8 24.5 63 43.9 98.9 57.3l15.8 85.3a32.05 32.05 0 0 0 25.8 25.7l2.7.5a448.3 448.3 0 0 0 158.8 0l2.7-.5a32.05 32.05 0 0 0 25.8-25.7l15.7-84.9c36.2-13.6 69.6-32.9 99.6-57.5l81.2 28.9a32 32 0 0 0 35.1-9.5l1.8-2.1c34.8-41.1 61.5-87.4 79.6-137.7l.9-2.6c4.3-12.4.6-26.3-9.5-35m-412.3 52.2c-97.1 0-175.8-78.7-175.8-175.8s78.7-175.8 175.8-175.8s175.8 78.7 175.8 175.8s-78.7 175.8-175.8 175.8"/></svg>
-        设置
-      `;
-      settingsBtn.style.display = 'flex';
-      settingsBtn.onclick = () => this.toggleSection('config');
-
       // 保存书签按钮 - 只要配置完整就显示
       if (this.isConfigured()) {
         saveBtn.style.display = 'flex';
+        saveBtn.style.justifyContent = 'center';
         saveBtn.disabled = this.categories.length === 0; // 只在分类未加载时禁用
         // 确保按钮内容和事件正确
-        saveBtn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16"><path fill="currentColor" d="M10.414 1H1v14h14V5.586zM4 4h5v2H4zm8 5v4h-2v-2H6v2H4V9z"/></svg>
-          ${this.categories.length === 0 ? '加载中...' : '保存'}
-        `;
+        saveBtn.textContent = this.categories.length === 0 ? '加载中...' : '保存';
         saveBtn.onclick = () => this.saveBookmark();
       } else {
         saveBtn.style.display = 'none';
@@ -531,12 +545,17 @@ class BookmarkExtension {
     const categorySelect = document.getElementById('categorySelect');
     const loadingEl = document.getElementById('categoryLoading');
     const saveBtn = document.getElementById('saveBtn');
+    const statusEl = document.getElementById('categoryStatus');
 
     if (!categorySelect || !loadingEl) return;
 
     // 显示加载状态
     categorySelect.style.display = 'none';
     loadingEl.style.display = 'flex';
+    if (statusEl) {
+      statusEl.textContent = '加载分类中...';
+      statusEl.style.color = '#6b7280';
+    }
 
     try {
       const apiUrl = this.getApiUrl();
@@ -565,16 +584,23 @@ class BookmarkExtension {
 
       // 启用保存按钮并更新显示
       saveBtn.disabled = false;
-      saveBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16"><path fill="currentColor" d="M10.414 1H1v14h14V5.586zM4 4h5v2H4zm8 5v4h-2v-2H6v2H4V9z"/></svg>
-        保存
-      `;
+      saveBtn.textContent = '保存';
 
-      this.showStatus(`✅ 成功加载 ${this.categories.length} 个分类`, 'success');
+      // 在"添加书签"标题右侧显示成功提示，2 秒后消失
+      if (statusEl) {
+        statusEl.textContent = `✅ 已加载 ${this.categories.length} 个分类`;
+        statusEl.style.color = '#10b981';
+        setTimeout(() => {
+          statusEl.textContent = '';
+        }, 2000);
+      }
 
     } catch (error) {
       console.error('Failed to load categories:', error);
-      this.showStatus(`加载分类失败：${error.message}`, 'error');
+      if (statusEl) {
+        statusEl.textContent = `❌ ${error.message}`;
+        statusEl.style.color = '#ef4444';
+      }
     } finally {
       // 隐藏加载状态
       categorySelect.style.display = 'block';
@@ -685,6 +711,7 @@ class BookmarkExtension {
       <div class="spinner"></div>
       <span>保存中...</span>
     `;
+    saveBtn.style.justifyContent = 'center';
 
     this.showStatus('正在保存...', 'testing');
 
@@ -789,10 +816,7 @@ class BookmarkExtension {
       this.showStatus(`❌ ${error.message}`, 'error');
     } finally {
       saveBtn.disabled = false;
-      saveBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16"><path fill="currentColor" d="M10.414 1H1v14h14V5.586zM4 4h5v2H4zm8 5v4h-2v-2H6v2H4V9z"/></svg>
-        保存
-      `;
+      saveBtn.textContent = '保存';
     }
   }
 
@@ -974,6 +998,182 @@ class BookmarkExtension {
     const root = this.getRootDomain(url);
     if (!root) return null;
     return links.find(link => link && link.url && this.getRootDomain(link.url) === root) || null;
+  }
+
+  // 精确 URL 匹配：规范化后比较，用于删除场景定位"那一条"
+  findExactMatch(url, links) {
+    if (!url || !Array.isArray(links)) return null;
+    const normalized = this.normalizeUrl(url);
+    if (!normalized) return null;
+    return links.find(link => link && link.url && this.normalizeUrl(link.url) === normalized) || null;
+  }
+
+  // 打开 popup 时检查当前页是否已添加（精确 URL 匹配），若是则显示卡片
+  async checkExistingBookmark() {
+    const currentUrl = this.currentTab && this.currentTab.url;
+    if (!currentUrl || !/^https?:\/\//i.test(currentUrl)) {
+      this.hideExistingBookmark();
+      return;
+    }
+    try {
+      const apiUrl = this.getApiUrl();
+      const response = await fetch(`${apiUrl}?getConfig=links`, {
+        method: 'GET',
+        headers: this.createAuthHeaders()
+      });
+      if (!response.ok) return;
+      let links = await response.json();
+      if (!Array.isArray(links)) links = [];
+      const match = this.findExactMatch(currentUrl, links);
+      if (match) {
+        this.showExistingBookmark(match);
+      } else {
+        this.hideExistingBookmark();
+      }
+    } catch (e) {
+      // 静默失败，不影响主流程
+      console.error('checkExistingBookmark failed:', e);
+    }
+  }
+
+  // 显示已存在书签卡片
+  showExistingBookmark(link) {
+    this.existingBookmark = link;
+    const card = document.getElementById('existingBookmarkCard');
+    const iconEl = document.getElementById('existingBookmarkIcon');
+    const titleEl = document.getElementById('existingBookmarkTitle');
+    const metaEl = document.getElementById('existingBookmarkMeta');
+    const deleteBtn = document.getElementById('deleteBookmarkBtn');
+    if (!card) return;
+
+    titleEl.textContent = link.title || '无标题';
+    const categoryName = this.getCategoryDisplayName(link.categoryId);
+    metaEl.textContent = `分类：${categoryName}`;
+
+    // 图标处理：优先用书签自带 icon，回退到当前页 favIcon
+    const iconSrc = link.icon || this.currentTab?.favIconUrl || '';
+    if (iconSrc) {
+      iconEl.src = iconSrc;
+      iconEl.style.visibility = 'visible';
+    } else {
+      iconEl.style.visibility = 'hidden';
+    }
+
+    this.resetDeleteConfirm();
+    card.style.display = 'flex';
+    if (deleteBtn) deleteBtn.style.display = 'flex';
+  }
+
+  // 隐藏已存在书签卡片
+  hideExistingBookmark() {
+    const card = document.getElementById('existingBookmarkCard');
+    const deleteBtn = document.getElementById('deleteBookmarkBtn');
+    if (card) card.style.display = 'none';
+    if (deleteBtn) deleteBtn.style.display = 'none';
+    this.existingBookmark = null;
+    this.resetDeleteConfirm();
+  }
+
+  // 重置删除按钮的二次确认态
+  resetDeleteConfirm() {
+    this.deleteConfirming = false;
+    if (this.deleteResetTimer) {
+      clearTimeout(this.deleteResetTimer);
+      this.deleteResetTimer = null;
+    }
+    const btn = document.getElementById('deleteBookmarkBtn');
+    const txt = document.getElementById('deleteBookmarkBtnText');
+    if (btn) btn.classList.remove('confirming');
+    if (txt) txt.textContent = '删除书签';
+  }
+
+  // 删除按钮点击：首次进入确认态，再次点击执行删除
+  handleDeleteClick() {
+    if (!this.existingBookmark) return;
+    if (!this.deleteConfirming) {
+      // 进入确认态，3 秒内未再次点击则自动复位
+      this.deleteConfirming = true;
+      const btn = document.getElementById('deleteBookmarkBtn');
+      const txt = document.getElementById('deleteBookmarkBtnText');
+      if (btn) btn.classList.add('confirming');
+      if (txt) txt.textContent = '确认删除？';
+      this.deleteResetTimer = setTimeout(() => this.resetDeleteConfirm(), 3000);
+      return;
+    }
+    // 已是确认态，执行删除
+    this.resetDeleteConfirm();
+    this.deleteBookmark();
+  }
+
+  // 删除当前页精确匹配的书签：拉全量 → 过滤掉目标 → 全量回写
+  async deleteBookmark() {
+    const target = this.existingBookmark;
+    if (!target) return;
+
+    const btn = document.getElementById('deleteBookmarkBtn');
+    const txt = document.getElementById('deleteBookmarkBtnText');
+    if (btn) btn.disabled = true;
+    if (txt) txt.textContent = '删除中...';
+
+    this.showStatus('正在删除...', 'testing');
+
+    try {
+      const apiUrl = this.getApiUrl();
+
+      // 拉取现有 links
+      const getResponse = await fetch(`${apiUrl}?getConfig=links`, {
+        method: 'GET',
+        headers: this.createAuthHeaders()
+      });
+      if (!getResponse.ok) {
+        throw new Error(`获取数据失败 (${getResponse.status})`);
+      }
+      let links = await getResponse.json();
+      if (!Array.isArray(links)) links = [];
+
+      // 过滤掉目标书签：优先按 id，其次按规范化 URL
+      const targetId = target.id;
+      const targetNorm = this.normalizeUrl(target.url);
+      const remaining = links.filter(link => {
+        if (!link) return true;
+        if (targetId && link.id === targetId) return false;
+        if (targetNorm && link.url && this.normalizeUrl(link.url) === targetNorm) return false;
+        return true;
+      });
+
+      if (remaining.length === links.length) {
+        // 未找到匹配项，可能已被删除
+        this.showStatus('未找到该书签，可能已被删除', 'error');
+        this.hideExistingBookmark();
+        return;
+      }
+
+      // 全量回写
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: this.createAuthHeaders(),
+        body: JSON.stringify({
+          saveConfig: 'links',
+          links: remaining
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`删除失败 (${response.status})`);
+      }
+
+      this.showStatus('✅ 已删除', 'success');
+      this.hideExistingBookmark();
+
+      // 通知后台刷新缓存，红点状态即时更新
+      chrome.runtime.sendMessage({ action: 'refreshDomainsCache' });
+    } catch (error) {
+      console.error('Delete bookmark failed:', error);
+      this.showStatus(`❌ 删除失败：${error.message}`, 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (txt) txt.textContent = '删除书签';
+    }
   }
 
   // 简易 HTML 转义，防止用户数据破坏 DOM

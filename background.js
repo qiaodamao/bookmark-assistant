@@ -8,6 +8,8 @@ importScripts('vendor/tldts.min.js');
 const CACHE_KEY = 'savedDomainsCache';       // 已保存书签的根域名集合
 const CACHE_TIME_KEY = 'savedDomainsCacheTime'; // 缓存时间戳
 const CACHE_TTL = 6 * 60 * 60 * 1000;         // 缓存有效期：6 小时
+const ALARM_NAME = 'refreshDomains';          // 定时刷新缓存的 alarm 名称
+const REFRESH_INTERVAL_MIN = 30;              // 定时刷新间隔：30 分钟
 
 const DEFAULT_ICON = {
   '16': 'icons/icon16.png',
@@ -233,6 +235,9 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('Bookmark Extension installed');
   refreshDomainsCache(true);
 
+  // 创建定时刷新任务，定期同步主站最新书签（感知删除等变更）
+  chrome.alarms.create(ALARM_NAME, { periodInMinutes: REFRESH_INTERVAL_MIN });
+
   // 设置默认配置（保留原有逻辑）
   chrome.storage.sync.get(['bookmarkConfig'], (result) => {
     if (!result.bookmarkConfig) {
@@ -251,6 +256,22 @@ chrome.runtime.onInstalled.addListener(() => {
 // 浏览器启动时刷新缓存
 chrome.runtime.onStartup.addListener(() => {
   refreshDomainsCache(true);
+  // 确保定时器存在（service worker 重启后 alarm 仍保留，这里做幂等保护）
+  chrome.alarms.create(ALARM_NAME, { periodInMinutes: REFRESH_INTERVAL_MIN });
+});
+
+// 定时刷新：感知主站的删除等变更，刷新后重检当前标签页
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name !== ALARM_NAME) return;
+  await refreshDomainsCache(true);
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.url) {
+      await checkAndUpdateBadge(tab.id, tab.url);
+    }
+  } catch (e) {
+    // 忽略
+  }
 });
 
 // 监听来自 popup 的消息
