@@ -5,19 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bookmark Assistant</title>
   <style>
-    body {
+    html, body {
       width: 420px;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: #f8fafc;
+      font-family: 'Microsoft YaHei', '微软雅黑', 'PingFang SC', '苹方', Helvetica, Arial, sans-serif;
+      background: #ffffff;
       color: #1f2937;
     }
 
     .header {
-      padding: 12px 16px;
-      background: #3b82f6;
-      color: white;
+      padding: 6px 16px;
+      background: #f3f5f6;
+      color: #1f2937;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -27,10 +27,11 @@
       margin: 0;
       font-size: 18px;
       font-weight: 600;
+      color: #374151;
     }
 
     .main {
-      padding: 12px;
+      padding: 12px 20px 20px;
     }
 
     .config-section {
@@ -374,12 +375,12 @@
 </head>
 <body>
   <div class="header">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+    <svg width="20" height="20" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M396.072 483.26L291.615 439.071C280.346 434.304 268.237 431.847 256.003 431.847C243.77 431.847 231.66 434.304 220.391 439.071L115.934 483.26C85.1179 496.299 51 473.641 51 440.131V89.9267C51 54.0704 80.0261 25 115.828 25H396.172C431.974 25 461 54.0704 461 89.9267V440.131C461 473.634 426.882 496.299 396.066 483.26H396.072Z" fill="currentColor"/>
     </svg>
-    <h1>Bookmark Assistant</h1>
-    <button id="headerSettingsBtn" type="button" title="设置" style="margin-left: auto; background: transparent; border: none; color: white; cursor: pointer; padding: 4px; display: flex; align-items: center; opacity: 0.9;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 1024 1024"><path fill="currentColor" d="M512.5 390.6c-29.9 0-57.9 11.6-79.1 32.8c-21.1 21.2-32.8 49.2-32.8 79.1s11.7 57.9 32.8 79.1c21.2 21.1 49.2 32.8 79.1 32.8s57.9-11.7 79.1-32.8c21.1-21.2 32.8-49.2 32.8-79.1s-11.7-57.9-32.8-79.1a110.96 110.96 0 0 0-79.1-32.8m412.3 235.5l-65.4-55.9c3.1-19 4.7-38.4 4.7-57.7s-1.6-38.8-4.7-57.7l65.4-55.9a32.03 32.03 0 0 0 9.3-35.2l-.9-2.6a442.5 442.5 0 0 0-79.6-137.7l-1.8-2.1a32.12 32.12 0 0 0-35.1-9.5l-81.2 28.9c-30-24.6-63.4-44-99.6-57.5l-15.7-84.9a32.05 32.05 0 0 0-25.8-25.7l-2.7-.5c-52-9.4-106.8-9.4-158.8 0l-2.7.5a32.05 32.05 0 0 0-25.8 25.7l-15.8 85.3a353.4 353.4 0 0 0-98.9 57.3l-81.8-29.1a32 32 0 0 0-35.1 9.5l-1.8 2.1a445.9 445.9 0 0 0-79.6 137.7l-.9 2.6c-4.5 12.5-.8 26.5 9.3 35.2l66.2 56.5c-3.1 18.8-4.6 38-4.6 57c0 19.2 1.5 38.4 4.6 57l-66 56.5a32.03 32.03 0 0 0-9.3 35.2l.9 2.6c18.1 50.3 44.8 96.8 79.6 137.7l1.8 2.1a32.12 32.12 0 0 0 35.1 9.5l81.8-29.1c29.8 24.5 63 43.9 98.9 57.3l15.8 85.3a32.05 32.05 0 0 0 25.8 25.7l2.7.5a448.3 448.3 0 0 0 158.8 0l2.7-.5a32.05 32.05 0 0 0 25.8-25.7l15.7-84.9c36.2-13.6 69.6-32.9 99.6-57.5l81.2 28.9a32 32 0 0 0 35.1-9.5l1.8-2.1c34.8-41.1 61.5-87.4 79.6-137.7l.9-2.6c4.3-12.4.6-26.3-9.5-35m-412.3 52.2c-97.1 0-175.8-78.7-175.8-175.8s78.7-175.8 175.8-175.8s175.8 78.7 175.8 175.8s-78.7 175.8-175.8 175.8"/></svg>
+    <h1>书签助手</h1>
+    <button id="headerSettingsBtn" type="button" title="设置" style="margin-left: auto; background: transparent; border: none; color: #1f2937; cursor: pointer; padding: 4px; display: flex; align-items: center; opacity: 0.9;">
+      <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="20" height="20"><path fill="currentColor" d="M737.6 963.2H286.4c-21.6 0-41.6-11.2-52-30.4L8 542.4c-10.4-18.4-10.4-41.6 0-60L233.6 91.2c10.4-18.4 30.4-30.4 52-30.4h452c21.6 0 41.6 11.2 52 30.4L1016 481.6c10.4 18.4 10.4 41.6 0 60L790.4 932.8c-11.2 19.2-31.2 30.4-52.8 30.4z m-448-65.6h445.6L957.6 512 734.4 126.4H289.6L66.4 512l223.2 385.6z"/><path fill="currentColor" d="M512 701.6c-104.8 0-189.6-85.6-189.6-189.6 0-104.8 85.6-189.6 189.6-189.6 104.8 0 189.6 85.6 189.6 189.6 0 104.8-84.8 189.6-189.6 189.6z m0-313.6c-68.8 0-124 56-124 124s56 124 124 124 124-56 124-124c0-68.8-55.2-124-124-124z"/></svg>
     </button>
   </div>
 
@@ -438,10 +439,10 @@
     </div>
 
     <!-- 保存部分 -->
-    <div id="saveSection" class="config-section" style="display: none;">
-      <h2>
+    <div id="saveSection" style="display: none;">
+      <h2 style="display: flex; align-items: center; gap: 8px; margin: 0 0 10px 0; font-size: 16px; font-weight: 600; color: #374151;">
         添加书签
-        <span id="categoryStatus" style="font-size: 12px; font-weight: 400; color: #6b7280; margin-left: auto;"></span>
+        <span id="categoryStatus" style="font-size: 14px; font-weight: 400; color: #6b7280; margin-left: auto;"></span>
       </h2>
 
       <!-- 链接类型选择 -->
@@ -481,38 +482,39 @@
 
       <!-- 自定义链接信息 -->
       <div id="customLinkSection" style="display: none;">
-        <div class="form-group">
-          <label for="customTitle">标题 <span style="color: #ef4444;">*</span></label>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label for="customTitle" style="font-size: 12px; color: #6b7280;">标题 <span style="color: #ef4444;">*</span></label>
           <input type="text" id="customTitle" placeholder="输入链接标题">
         </div>
 
-        <div class="form-group">
-          <label for="customUrl">URL <span style="color: #ef4444;">*</span></label>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label for="customUrl" style="font-size: 12px; color: #6b7280;">URL <span style="color: #ef4444;">*</span></label>
           <input type="url" id="customUrl" placeholder="https://example.com">
         </div>
 
-        <div class="form-group">
-          <label for="customDescription">说明</label>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label for="customDescription" style="font-size: 12px; color: #6b7280;">说明</label>
           <textarea id="customDescription" rows="2" placeholder="输入链接说明（可选）" style="resize: vertical; width: 100%;"></textarea>
         </div>
 
         <div class="form-group">
-          <label for="customIcon">图标</label>
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <label for="customIcon" style="font-size: 12px; color: #6b7280;">图标</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
             <select id="iconType" style="flex: 1;">
               <option value="faviconextractor">Favicon Extractor</option>
               <option value="google">Google API</option>
+              <option value="favdog">FavDog</option>
               <option value="customapi">自定义 API</option>
               <option value="customurl">自定义 URL</option>
             </select>
-            <button id="previewIconBtn" class="btn btn-secondary" style="width: auto; padding: 8px 12px; font-size: 12px;">
+            <div id="iconPreview" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span style="color: #9ca3af; font-size: 12px; display: none;">图标预览</span>
+            </div>
+            <button id="previewIconBtn" class="btn btn-secondary" style="flex: 0 0 auto !important; width: 70px !important; padding: 2px 4px !important; font-size: 12px !important; gap: 0 !important; white-space: nowrap; justify-content: center; display: inline-flex; align-self: stretch !important;">
               预览
             </button>
           </div>
           <input type="text" id="customIcon" placeholder="自定义图标 URL（可选）" style="display: none;">
-          <div id="iconPreview" style="margin-top: 8px; height: 32px; display: flex; align-items: center; gap: 8px;">
-            <span style="color: #9ca3af; font-size: 12px;">图标预览</span>
-          </div>
         </div>
       </div>
 
@@ -530,7 +532,7 @@
     </div>
 
     <!-- 操作按钮 -->
-    <div class="actions">
+    <div class="actions" style="margin-top: 16px;">
       <button id="deleteBookmarkBtn" class="btn btn-danger" type="button" style="display: none;">
         <span id="deleteBookmarkBtnText">删除书签</span>
       </button>

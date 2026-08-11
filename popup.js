@@ -394,13 +394,24 @@ class BookmarkExtension {
   toggleLinkTypeSection() {
     const currentSection = document.getElementById('currentPageSection');
     const customSection = document.getElementById('customLinkSection');
+    const existingCard = document.getElementById('existingBookmarkCard');
+    const deleteBtn = document.getElementById('deleteBookmarkBtn');
 
     if (this.linkType === 'current') {
       currentSection.style.display = 'block';
       customSection.style.display = 'none';
+      // 切回当前页面：恢复已添加卡片和删除按钮的显示状态
+      if (this.existingBookmark) {
+        if (existingCard) existingCard.style.display = 'flex';
+        if (deleteBtn) deleteBtn.style.display = 'flex';
+      }
     } else {
       currentSection.style.display = 'none';
       customSection.style.display = 'block';
+      // 切换到自定义：隐藏已添加卡片和删除按钮，避免高度超出出现滚动条
+      if (existingCard) existingCard.style.display = 'none';
+      if (deleteBtn) deleteBtn.style.display = 'none';
+      this.resetDeleteConfirm();
     }
 
     this.validateSaveForm();
@@ -784,7 +795,8 @@ class BookmarkExtension {
           document.getElementById('iconPreview').innerHTML = '<span style="color: #9ca3af; font-size: 12px;">图标预览</span>';
           // 隐藏所有额外选项
           document.getElementById('customIcon').style.display = 'none';
-          document.getElementById('faviconextractorOptions').style.display = 'block';
+          const faviconextractorOptions = document.getElementById('faviconextractorOptions');
+          if (faviconextractorOptions) faviconextractorOptions.style.display = 'block';
 
           this.customLink = {
             title: '',
@@ -824,18 +836,18 @@ class BookmarkExtension {
     const customIconInput = document.getElementById('customIcon');
     const faviconextractorOptions = document.getElementById('faviconextractorOptions');
 
-    if (!customIconInput || !faviconextractorOptions) return;
+    if (!customIconInput) return;
 
     // 隐藏所有选项
     customIconInput.style.display = 'none';
-    faviconextractorOptions.style.display = 'none';
+    if (faviconextractorOptions) faviconextractorOptions.style.display = 'none';
 
     if (iconType === 'customapi' || iconType === 'customurl') {
       customIconInput.style.display = 'block';
       customIconInput.placeholder = iconType === 'customapi'
         ? '输入自定义 API 地址（可选）'
         : '输入自定义图标 URL（可选）';
-    } else if (iconType === 'faviconextractor') {
+    } else if (iconType === 'faviconextractor' && faviconextractorOptions) {
       faviconextractorOptions.style.display = 'block';
     }
   }
@@ -850,23 +862,32 @@ class BookmarkExtension {
       return;
     }
 
-    iconPreview.innerHTML = '<div class="spinner" style="width: 16px; height: 16px;"></div><span style="color: #6b7280; font-size: 12px;">获取中...</span>';
+    iconPreview.innerHTML = '<div class="spinner" style="width: 20px; height: 20px;"></div>';
 
     try {
       const iconUrl = await this.getIconUrl(url, this.customLink.iconType, this.customLink.icon);
 
       if (iconUrl) {
         iconPreview.innerHTML = `
-          <img src="${iconUrl}" alt="Icon" style="width: 24px; height: 24px; object-fit: contain;"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-          <span style="color: #9ca3af; font-size: 12px; display: none;">无法加载图标</span>
+          <img src="${iconUrl}" alt="Icon" style="width: 28px; height: 28px; object-fit: contain;"
+               onerror="this.style.display='none';">
         `;
+        // 图标加载失败时给出提示
+        const img = iconPreview.querySelector('img');
+        if (img) {
+          img.addEventListener('error', () => {
+            iconPreview.innerHTML = '';
+            this.showStatus('图标加载失败', 'error');
+          });
+        }
       } else {
-        iconPreview.innerHTML = '<span style="color: #9ca3af; font-size: 12px;">无法获取图标</span>';
+        iconPreview.innerHTML = '';
+        this.showStatus('无法获取图标', 'error');
       }
     } catch (error) {
       console.error('Preview icon failed:', error);
-      iconPreview.innerHTML = '<span style="color: #9ca3af; font-size: 12px;">获取图标失败</span>';
+      iconPreview.innerHTML = '';
+      this.showStatus('获取图标失败', 'error');
     }
   }
 
@@ -896,6 +917,10 @@ class BookmarkExtension {
 
       case 'google':
         return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+
+      case 'favdog':
+        // FavDog：免费无 Key，国内可访问，支持 SVG 自动消毒
+        return `https://fav.dog/${domain}?s=64`;
 
       case 'customapi':
         if (customValue) {
